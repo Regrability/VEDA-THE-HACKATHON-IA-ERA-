@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - Умный помощник для ЛПА/ЛНПА</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .header p {
+            color: #718096;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .chat-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            height: 70vh;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            background: #48bb78;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            background: #4299e1;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .message.ai {
+            background: #f7fafc;
+            color: #2d3748;
+            align-self: flex-start;
+            border: 1px solid #e2e8f0;
+        }
+
+        .chat-input {
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        #messageInput {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 1rem;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s;
+            min-height: 45px;
+            max-height: 120px;
+        }
+
+        #messageInput:focus {
+            border-color: #4299e1;
+        }
+
+        .send-button, .generate-button {
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            font-size: 1.2rem;
+        }
+
+        .send-button:hover, .generate-button:hover {
+            background: #3182ce;
+        }
+
+        .send-button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .mode-selector, .document-generator {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .mode-selector h3, .document-generator h3 {
+            margin-bottom: 15px;
+            color: #4a5568;
+            font-size: 1.2rem;
+        }
+
+        .mode-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mode-button {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .mode-button:hover {
+            border-color: #4299e1;
+            transform: translateY(-2px);
+        }
+
+        .mode-button.active {
+            background: #4299e1;
+            color: white;
+            border-color: #4299e1;
+        }
+
+        .document-types {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .doc-type {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .doc-type:hover {
+            border-color: #48bb78;
+        }
+
+        .doc-type.active {
+            background: #48bb78;
+            color: white;
+            border-color: #48bb78;
+        }
+
+        .generate-button {
+            width: 100%;
+            border-radius: 10px;
+            height: auto;
+            padding: 12px;
+            font-size: 1rem;
+            background: #48bb78;
+        }
+
+        .generate-button:hover {
+            background: #38a169;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: #718096;
+            padding: 10px 20px;
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #4299e1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .chat-section {
+                height: 60vh;
+            }
+
+            .document-types {
+                grid-template-columns: 1fr;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+        }
+
+        /* Дополнительные стили из вашего кода */
+        .upload-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .upload-area {
+            border: 2px dashed #e2e8f0;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .upload-area:hover {
+            border-color: #4299e1;
+        }
+
+        .upload-area.dragover {
+            border-color: #4299e1;
+            background-color: #f7fafc;
+        }
+
+        .file-list {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .source-item {
+            background: #f7fafc;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .confidence-bar {
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: #48bb78;
+            transition: width 0.3s;
+        }
+
+        .system-info {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .document-preview {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body data-user-role="{{ user.role }}" data-user-name="{{ user.name }}">
+    
+    <div class="container">
+        <header class="header">
+            <h1>🤖 Veda</h1>
+            <p>Умный помощник для работы с правовыми актами и генерации документов</p>
+            <div class="system-info" id="systemStatus">
+                Загрузка статуса системы...
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="chat-section">
+                <div class="chat-header">
+                    <div class="status-indicator" id="statusIndicator"></div>
+                    <h2>Чат с AI ассистентом</h2>
+                </div>
+                
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message ai">
+                        Добро пожаловать! Я AI-ассистент для работы с локальными правовыми актами. 
+                        Могу помочь с поиском информации и генерацией документов.
+                    </div>
+                </div>
+
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div>
+                    <span>AI обрабатывает запрос...</span>
+                </div>
+
+                <div class="chat-input">
+                    <div class="input-container">
+                        <div class="input-wrapper">
+                            <textarea 
+                                id="messageInput" 
+                                placeholder="Введите ваш вопрос по ЛПА/ЛНПА..."
+                                rows="1"
+                            ></textarea>
+                        </div>
+                        <button class="send-button" id="sendButton">
+                            ➤
+                        </button>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label>
+                            <input type="checkbox" id="useLLM"> Использовать расширенную генерацию ответов
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="sidebar">
+                <div class="mode-selector">
+                    <h3>Режим работы</h3>
+                    <div class="mode-buttons">
+                        <button class="mode-button active" data-mode="qa">
+                            📚 Вопросы и ответы
+                        </button>
+                        <button class="mode-button" data-mode="search">
+                            🔍 Поиск по базе
+                        </button>
+                        <button class="mode-button" data-mode="document">
+                            📄 Генерация документов
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tab-content active" id="qaTab">
+                    <div class="document-generator">
+                        <h3>Быстрые вопросы</h3>
+                        <div class="quick-questions">
+                            <button class="mode-button" onclick="askQuickQuestion('Что такое ЛПА?')">
+                                Что такое ЛПА?
+                            </button>
+                            <button class="mode-button" onclick="askQuickQuestion('Требования к техническим заданиям')">
+                                Требования к ТЗ
+                            </button>
+                            <button class="mode-button" onclick="askQuickQuestion('Порядок закупки')">
+                                Порядок закупки
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="searchTab">
+                    <div class="document-generator">
+                        <h3>Поиск по документам</h3>
+                        <input type="text" id="searchQuery" placeholder="Введите поисковый запрос..." 
+                               style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 5px;">
+                        <select id="searchMethod" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 5px;">
+                            <option value="combined">Комбинированный поиск</option>
+                            <option value="semantic">Семантический поиск</option>
+                            <option value="tfidf">TF-IDF поиск</option>
+                        </select>
+                        <button class="generate-button" onclick="performSearch()">
+                            🔍 Найти
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="documentTab">
+                    <div class="document-generator">
+                        <h3>Генерация документов</h3>
+                        <div class="document-types">
+                            <button class="doc-type active" data-type="ТЗ">ТЗ</button>
+                            <button class="doc-type" data-type="ЗНЗ">ЗНЗ</button>
+                            <button class="doc-type" data-type="КП">КП</button>
+                        </div>
+                        <select id="documentFormat" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 5px;">
+                            <option value="txt">Текстовый формат</option>
+                            <option value="docx">DOCX формат</option>
+                        </select>
+                        <button class="generate-button" id="generateDoc">
+                            📄 Сгенерировать документ
+                        </button>
+                    </div>
+                </div>
+
+                <div id="adminSection" style="display: none;" class="upload-section">
+                    <h3>Загрузка документов</h3>
+                    <div class="upload-area" id="uploadArea" onclick="uploadDocuments()">
+                        📁 Кликните для выбора TXT файлов
+                        <input type="file" id="fileInput" multiple accept=".txt,.pdf,.docx,.doc" style="display: none;">
+                    </div>
+                    <button class="generate-button" onclick="uploadDocuments()" style="background: #ed8936; margin-right: 10px;">
+                        📤 Загрузить в базу знаний
+                    </button>
+                </div>
+
+                <div class="admin-section" id="adminPanel" style="display: none;">
+                    <h3>⚙️ Панель администратора</h3>
+                    
+                    <div class="admin-actions">
+                        <button class="generate-button" onclick="showDocumentsList()" style="background: #ed64a6;">
+                            📊 Управление документами
+                        </button>
+                        <button class="generate-button" onclick="rebuildIndex()" style="background: #9f7aea;">
+                            🔄 Перестроить индекс
+                        </button>
+                    </div>
+                    
+                    <div id="documentsList" class="documents-list" style="display: none; margin-top: 15px;">
+                        <h4>Загруженные документы:</h4>
+                        <div id="documentsContent"></div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script>
+       // Глобальные переменные
+        let currentDocumentType = 'ТЗ';
+
+        // Проверка роли пользователя и инициализация
+        function checkUserRole() {
+            const userRole = document.body.dataset.userRole;
+            const adminSections = document.querySelectorAll('#adminSection, .admin-section');
+            
+            if (userRole === 'admin') {
+                adminSections.forEach(section => {
+                    section.style.display = 'block';
+                });
+            }
+        }
+
+        // Показать список документов
+        function showDocumentsList() {
+            const documentsList = document.getElementById('documentsList');
+            const documentsContent = document.getElementById('documentsContent');
+            
+            fetch('/api/admin/documents')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Документы:', data); // Для отладки
+                    if (data.status === 'success') {
+                        let html = '';
+                        const sources = data.data.sources;
+                        
+                        if (Object.keys(sources).length === 0) {
+                            html = '<p>Нет загруженных документов</p>';
+                        } else {
+                            for (const [source, docs] of Object.entries(sources)) {
+                                html += `
+                                    <div class="source-item">
+                                        <strong>${source}</strong> (${docs.length} документов)
+                                        <button onclick="deleteSource('${encodeURIComponent(source)}')" 
+                                                style="background: #e53e3e; color: white; border: none; border-radius: 3px; padding: 2px 8px; margin-left: 10px; cursor: pointer;">
+                                            Удалить
+                                        </button>
+                                        <div style="margin-top: 5px; font-size: 0.8em;">
+                                            ${docs.map(doc => `• ${doc.question}`).join('<br>')}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+                        documentsContent.innerHTML = html;
+                        documentsList.style.display = 'block';
+                    } else {
+                        alert('Ошибка: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки списка документов:', error);
+                    alert('Ошибка загрузки списка документов');
+                });
+        }
+
+        // Удалить источник
+        function deleteSource(source) {
+            if (confirm('Вы уверены, что хотите удалить этот источник документов?')) {
+                fetch(`/api/admin/documents/${source}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.data.message);
+                        showDocumentsList(); // Обновляем список
+                    } else {
+                        alert('Ошибка: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка удаления:', error);
+                    alert('Ошибка удаления');
+                });
+            }
+        }
+
+        // Перестроить индекс
+        function rebuildIndex() {
+            if (confirm('Перестроить индекс базы знаний? Это может занять некоторое время.')) {
+                // Здесь можно добавить вызов API для перестроения индекса
+                alert('Функция перестроения индекса будет реализована в следующей версии');
+            }
+        }
+
+        // Выход из системы
+        function logout() {
+            fetch('/api/logout', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = '/login';
+                }
+            });
+        }
+
+        // Основная инициализация приложения
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 AI Assistant загружен');
+            
+            // Добавляем информацию о пользователе в header
+            const header = document.querySelector('.header');
+            const userInfo = document.createElement('div');
+            userInfo.className = 'user-info';
+            userInfo.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <span>👤 ${document.body.dataset.userName} (${document.body.dataset.userRole})</span>
+                    <button onclick="logout()" style="background: #e53e3e; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer;">
+                        Выйти
+                    </button>
+                </div>
+            `;
+            header.appendChild(userInfo);
+            
+            // Проверяем роль пользователя
+            checkUserRole();
+            
+            // Инициализация чата
+            initializeChat();
+            
+            // Обновляем статус системы
+            updateSystemStatus();
+        });
+
+        function initializeChat() {
+            const sendButton = document.getElementById('sendButton');
+            const messageInput = document.getElementById('messageInput');
+
+            // Обработчики событий
+            sendButton.addEventListener('click', sendMessage);
+            messageInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Автоматическое изменение высоты текстового поля
+            messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+
+            // Переключение вкладок
+            document.querySelectorAll('.mode-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('.mode-button').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                    const tabId = this.dataset.mode + 'Tab';
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+
+            // Переключение типов документов
+            document.querySelectorAll('.doc-type').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('.doc-type').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    currentDocumentType = this.dataset.type;
+                });
+            });
+
+            // Генерация документа (упрощенная версия)
+            document.getElementById('generateDoc').addEventListener('click', function() {
+                generateSimpleDocument();
+            });
+        }
+
+        function updateSystemStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('systemStatus').innerHTML = 
+                            `✅ Система активна | Документов: ${data.data.documents_count} | AI: ${data.data.llm_available ? '✅' : '❌'}`;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('systemStatus').innerHTML = '❌ Ошибка подключения к серверу';
+                });
+        }
+
+        function addMessage(text, isUser = false) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            
+            const formattedText = text.replace(/\n/g, '<br>');
+            messageDiv.innerHTML = formattedText;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            messageInput.value = '';
+
+            const loading = document.getElementById('loadingIndicator');
+            loading.style.display = 'flex';
+            document.getElementById('sendButton').disabled = true;
+
+            fetch('/api/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question: message,
+                    use_llm: document.getElementById('useLLM').checked
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    let responseText = data.data.answer;
+                    if (data.data.sources && data.data.sources.length > 0) {
+                        // responseText += '\n\n📚 Источники:';
+                        // data.data.sources.forEach((source, index) => {
+                        //     responseText += `\n${index + 1}. ${source.document} (${(source.confidence * 100).toFixed(1)}%)`;
+                        // });
+                    }
+                    addMessage(responseText, false);
+                } else {
+                    addMessage(`Ошибка: ${data.message}`, false);
+                }
+            })
+            .catch(error => {
+                addMessage('Ошибка сети. Попробуйте еще раз.', false);
+            })
+            .finally(() => {
+                loading.style.display = 'none';
+                document.getElementById('sendButton').disabled = false;
+            });
+        }
+
+        // Упрощенная генерация документов
+        function generateSimpleDocument() {
+            const format = document.getElementById('documentFormat').value;
+            
+            addMessage(`Запрос на генерацию документа: ${currentDocumentType}`, true);
+            
+            const loading = document.getElementById('loadingIndicator');
+            loading.style.display = 'flex';
+
+            // Базовые данные для документов
+            const documentData = {
+                title: `${currentDocumentType} - ${new Date().toLocaleDateString()}`,
+                organization: 'Учреждение здравоохранения',
+                subject: 'Медицинское оборудование',
+                general_requirements: [
+                    'Соответствие техническим регламентам',
+                    'Наличие сертификатов качества',
+                    'Гарантийное обслуживание'
+                ],
+                quality_requirements: [
+                    'Срок службы не менее 5 лет',
+                    'Наличие русскоязычной документации',
+                    'Техническая поддержка 24/7'
+                ]
+            };
+
+            fetch('/api/generate-document', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    doc_type: currentDocumentType,
+                    format: format,
+                    data: documentData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (format === 'docx') {
+                        addMessage(`Документ "${currentDocumentType}" создан успешно. <a href="${data.data.download_url}" download>Скачать DOCX</a>`, false);
+                    } else {
+                        addMessage(`Документ "${currentDocumentType}":\n\n${data.data.content}`, false);
+                    }
+                } else {
+                    addMessage(`Ошибка генерации: ${data.message}`, false);
+                }
+            })
+            .catch(error => {
+                addMessage('Ошибка сети при генерации документа', false);
+            })
+            .finally(() => {
+                loading.style.display = 'none';
+            });
+        }
+
+        // Глобальные функции для кнопок
+        window.askQuickQuestion = function(question) {
+            document.getElementById('messageInput').value = question;
+            sendMessage();
+        };
+
+        window.performSearch = function() {
+            const query = document.getElementById('searchQuery').value.trim();
+            if (query) {
+                document.getElementById('messageInput').value = `Поиск: ${query}`;
+                sendMessage();
+            }
+        };
+
+        window.uploadDocuments = function() {
+            const fileInput = document.getElementById('fileInput');
+            fileInput.click();
+            
+            fileInput.onchange = function() {
+                if (this.files.length > 0) {
+                    const formData = new FormData();
+                    for (let file of this.files) {
+                        formData.append('files', file);
+                    }
+                    
+                    fetch('/api/upload-documents', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert(data.data.message);
+                            updateSystemStatus(); // Обновляем статус
+                        } else {
+                            alert('Ошибка: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert('Ошибка загрузки файлов');
+                    });
+                }
+            };
+        };
+    </script>
+    <!-- Модальное окно для ввода данных документа -->
+<div id="documentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Ввод данных документа</h3>
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="documentForm">
+                <div id="formFields">
+                    <!-- Поля формы будут генерироваться динамически -->
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="generate-button">Сгенерировать документ</button>
+                    <button type="button" class="cancel-button" onclick="closeModal()">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Стили для модального окна */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 0;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: #4a5568;
+    }
+
+    .close {
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .close:hover {
+        color: #000;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #4a5568;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        border-color: #4299e1;
+        outline: none;
+    }
+
+    .form-group textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .cancel-button {
+        background: #a0aec0;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 24px;
+        cursor: pointer;
+        flex: 1;
+    }
+
+    .cancel-button:hover {
+        background: #718096;
+    }
+
+    .list-item {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .list-item input {
+        flex: 1;
+    }
+
+    .remove-item {
+        background: #e53e3e;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        width: 40px;
+        cursor: pointer;
+    }
+
+    .remove-item:hover {
+        background: #c53030;
+    }
+
+    .add-item {
+        background: #48bb78;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 16px;
+        cursor: pointer;
+        margin-bottom: 15px;
+    }
+
+    .add-item:hover {
+        background: #38a169;
+    }
+</style>
+</body>
+</html>
